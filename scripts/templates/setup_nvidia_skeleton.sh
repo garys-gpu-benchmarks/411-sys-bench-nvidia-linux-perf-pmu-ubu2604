@@ -183,10 +183,17 @@ if [[ "${BENCHMARK_INSTALL_NCCL}" == "1" || -f src/nccl_bw.cu ]]; then
 fi
 if [[ "${BENCHMARK_INSTALL_PERF}" == "1" ]]; then
   # linux-tools-generic follows the newest archive kernel. Install tools for
-  # the running kernel only, and fail this perf workload if that package is absent.
+  # the running kernel when that package is published. A cloud kernel that is
+  # not in this Ubuntu archive has no matching linux-tools package; the
+  # collector then records PMU metrics as na and the workload still runs.
   log_status "STEP|SETUP apt-get install linux-tools-$(uname -r)"
-  record_cmd "DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common linux-tools-$(uname -r)"
-  DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common "linux-tools-$(uname -r)"
+  apt_install linux-tools-common || true
+  if apt-cache show "linux-tools-$(uname -r)" >/dev/null 2>&1; then
+    record_cmd "DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common linux-tools-$(uname -r)"
+    DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common "linux-tools-$(uname -r)"
+  else
+    log_status "WARN linux-tools-$(uname -r) is not in the apt archive; continuing without versioned perf"
+  fi
 fi
 
 if [[ "${BENCHMARK_INSTALL_PYTORCH}" == "1" || "${BENCHMARK_INSTALL_JAX}" == "1" ]]; then
