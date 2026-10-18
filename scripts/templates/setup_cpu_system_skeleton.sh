@@ -142,13 +142,7 @@ if [[ "${BENCHMARK_INSTALL_PERF}" == "1" ]]; then
   # and headers. Those postinst scripts build DKMS for a kernel that is not running.
   apt_install linux-tools-common
   KERNEL_RELEASE="$(uname -r)"
-  # Cloud kernels are often absent from this Ubuntu archive. The collector
-  # records PMU metrics as na when versioned perf is missing.
-  if apt-cache show "linux-tools-${KERNEL_RELEASE}" >/dev/null 2>&1; then
-    apt_install "linux-tools-${KERNEL_RELEASE}"
-  else
-    log_status "WARN linux-tools-${KERNEL_RELEASE} is not in the apt archive; continuing without versioned perf"
-  fi
+  apt_install "linux-tools-${KERNEL_RELEASE}"
 fi
 
 if [[ -f benchmark_specification.json ]]; then

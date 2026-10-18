@@ -782,16 +782,10 @@ if [[ -n "${workload_framework:-}${workload_name:-}" ]]; then
   fi
   if [[ "${BENCHMARK_INSTALL_PERF:-0}" == "1" ]] || grep -Eiq 'linux pmu|linux perf|(^|[^[:alnum:]_])perf([^[:alnum:]_]|$)' <<< "${workload_framework}${workload_name}"; then
     # linux-tools-generic depends on the newest kernel image and headers.
-    # A cloud kernel missing from this archive has no linux-tools package.
-    # The collector records PMU metrics as na and the workload still runs.
-    run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common || true
-    if apt-cache show "linux-tools-$(uname -r)" >/dev/null 2>&1; then
-      run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common \
-        "linux-tools-$(uname -r)"
-      install_status_log_step perf "installed linux-tools for the running kernel"
-    else
-      install_status_log_step perf "linux-tools-$(uname -r) is not in apt; PMU metrics may be na"
-    fi
+    # A missing linux-tools package for this kernel fails the perf workload.
+    run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y linux-tools-common \
+      "linux-tools-$(uname -r)"
+    install_status_log_step perf "installed linux-tools for the running kernel"
   fi
 fi
 
